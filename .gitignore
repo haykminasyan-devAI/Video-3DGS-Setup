@@ -1,0 +1,73 @@
+# Video-3DGS .gitignore
+
+# Virtual environments
+venv_video3dgs_new/
+venv_video3dgs/
+venv/
+env/
+
+# Large datasets (don't push to GitHub)
+datasets/
+asset/
+
+# Output videos and images (too large for GitHub)
+output/*.mp4
+output/*.avi
+output/*.png
+output/*.jpg
+output/vid3dgs_output/
+output/initial_edit/
+
+# Log files
+logs/*.out
+logs/*.err
+logs/*.log
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Model weights and checkpoints (too large)
+*.pth
+*.ckpt
+*.safetensors
+models/optical_flow/RAFT/models/*.pth
+
+# Downloaded model caches
+.cache/
+*.tar
+*.zip
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+*.old
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Keep structure but ignore large files
+!output/.gitkeep
+!datasets/.gitkeep
+!logs/.gitkeep
+

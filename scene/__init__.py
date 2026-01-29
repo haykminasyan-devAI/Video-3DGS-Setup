@@ -26,7 +26,7 @@ import numpy as np
 from scene.dataset_readers import storePly
 import math
 
-from scene.shs_updater import ShsUpdater
+# from scene.shs_updater import ShsUpdater  # Not used, commented out
 
 np.random.seed(1234)
 

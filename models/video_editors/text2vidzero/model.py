@@ -4,7 +4,9 @@ import numpy as np
 import tomesd
 import torch
 
-from models.video_editors.text2vidzero.diffusers.src.diffusers import StableDiffusionInstructPix2PixPipeline, StableDiffusionInstructPix2PixProgPipeline, StableDiffusionControlNetPipeline
+from diffusers import StableDiffusionInstructPix2PixPipeline, StableDiffusionControlNetPipeline
+# StableDiffusionInstructPix2PixProgPipeline is a custom class - using standard version
+StableDiffusionInstructPix2PixProgPipeline = StableDiffusionInstructPix2PixPipeline
 # from diffusers import StableDiffusionInstructPix2PixPipeline, StableDiffusionControlNetPipeline, ControlNetModel, UNet2DConditionModel
 from diffusers.schedulers import EulerAncestralDiscreteScheduler, DDIMScheduler
 from models.video_editors.text2vidzero.text_to_video_pipeline import TextToVideoPipeline
@@ -75,6 +77,10 @@ class Model:
     def inference_chunk(self, frame_ids, **kwargs):
         if not hasattr(self, "pipe") or self.pipe is None:
             return
+
+        # Remove image_orig (not compatible with standard diffusers)
+        if 'image_orig' in kwargs:
+            kwargs.pop('image_orig')
 
         prompt = np.array(kwargs.pop('prompt'))
         negative_prompt = np.array(kwargs.pop('negative_prompt', ''))

@@ -16,7 +16,7 @@ Zero-shot Video Editors References
 
 import os
 import shutil
-from numpy.lib.arraysetops import isin
+from numpy import isin
 import torch
 from random import randint
 from tqdm import tqdm
@@ -460,11 +460,11 @@ if __name__ == "__main__":
         op, iter_size = None, None
 
     args = parser.parse_args(sys.argv[1:])
-    args.save_iterations.append(args.iterations)
+    args.save_iterations.append(args.iteration)
 
     edit_op = OptimizationClipMaskParamsEdit(edit_parser)
     edit_args = edit_parser.parse_args(sys.argv[1:])
-    edit_args.save_iterations.append(edit_args.iterations)
+    edit_args.save_iterations.append(edit_args.iteration)
     
     # define parameters by arguments
     s_path = args.source_path
@@ -480,16 +480,20 @@ if __name__ == "__main__":
     ve_model = None
     # currently, only text2vid-zero is modulelized.
     # For other editors, load them by python command
-    if args.initial_editor == 1:
-        from models.video_editors.text2vidzero.model import Model
-        editor="vid-pix2pix"
-        ve_model = Model(device="cuda", dtype=torch.float16)
-    elif args.initial_editor == 2:
-        editor="tokenflow"
-    elif args.initial_editor == 3:
-        editor="RAVE"
-    elif args.initial_editor == 4:
-        editor="codef"
+    # Only load editors if actually editing (editing_method is not None)
+    if args.editing_method is not None:
+        if args.initial_editor == 1:
+            from models.video_editors.text2vidzero.model import Model
+            editor="vid-pix2pix"
+            ve_model = Model(device="cuda", dtype=torch.float16)
+        elif args.initial_editor == 2:
+            editor="tokenflow"
+        elif args.initial_editor == 3:
+            editor="RAVE"
+        elif args.initial_editor == 4:
+            editor="codef"
+        else:
+            editor="noedit"
     else:
         editor="noedit"
 

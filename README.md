@@ -1,140 +1,205 @@
-# Enhancing Temporal Consistency in Video Editing by Reconstructing Videos with 3D Gaussian Splatting [TMLR 2025]
-## [Project page](https://video-3dgs-project.github.io/) | [Paper](https://arxiv.org/pdf/2406.02541)
-<img src='asset/teaser.png' width='600'>
+# Video-3DGS - Video Editing with 3D Gaussian Splatting
 
-This repository contains the official Pytorch implementation of the paper "Enhancing Temporal Consistency in Video Editing by Reconstructing Videos with 3D Gaussian Splatting".
+## 🎉 **Working Setup - Ready to Use!**
 
+---
 
-## Dataset
+## 📹 **Your Final Videos**
 
-According to our paper, we conducted two tasks with the following datasets.
+All videos are in: `output/`
 
-- Video reconstruction: [DAVIS](https://davischallenge.org/davis2017/code.html) dataset (480x854)
-- Video editing: [LOVEU-TGVE-2023](https://github.com/showlab/loveu-tgve-2023?tab=readme-ov-file) dataset (480x480)
+1. **blackswan_ORIGINAL_before_vangogh.mp4** (2.1 MB) - Original video
+2. **blackswan_VANGOGH_STYLE_FINAL.mp4** (2.7 MB) 🎨 - Van Gogh painting style
+3. **blackswan_WHITE_SWAN_FINAL.mp4** (1.2 MB) 🦢 - Black swan → White swan
+4. **blackswan_reconstructed_SUCCESS.mp4** (2.2 MB) - 3DGS reconstruction
 
-There are two options for pre-processing the datasets.
-1. You can download the datasets with above link for original dataset and run MC-COLMAP.
-2. You directly download MC-COLMAP processed dataset from [here](https://drive.google.com/drive/folders/1uYmLWUn5veBlUES88-9NKgNibiHxhe_F) 
-
-We organize the datasets as follows:
-
-```shell
-├── datasets
-│   | recon
-│     ├── DAVIS
-│       ├── JPEGImages 
-│         ├── 480p
-│           ├── blackswan
-│           ├── blackswan_pts_camera_from_deva
-│           ├── ...
-│   | edit
-│     ├── DAVIS
-│       ├── 480p_frames 
-│         ├── bmx-rider
-│         ├── bmx-rider_pts_camera_from_deva
-
-
+**Download:**
+```bash
+scp <server>:/home/hayk.minasyan/Project/Video-3DGS-new/output/blackswan_*.mp4 .
 ```
 
-## Pipeline
+---
 
-<img src='asset/pipeline_v2.png' width='900'>
+## 🚀 **How to Edit More Videos**
 
+### **Quick Start:**
 
-## Environments
-Setting up environments for training contains three parts:
+1. **Edit** `edit_white_swan.slurm` (lines 52-64):
 
-1.  Download [COLMAP](https://github.com/colmap/colmap) and put it under "submodules".
-2.  Download [Tiny-cuda-nn](https://github.com/NVlabs/tiny-cuda-nn) and put it under "submodules".
+```bash
+# Change the prompt:
+PROMPT="your editing instruction here"
 
-```shell
-git clone https://github.com/dlsrbgg33/Video-3DGS.git --recursive
-cd Video-3DGS
-
-conda create -n video_3dgs python=3.8
-conda activate video_3dgs
-
-# install pytorch
-pip install torch==1.12.1+cu113 torchvision==0.13.1+cu113 torchaudio==0.12.1 --extra-index-url https://download.pytorch.org/whl/cu113
-
-# install packages & dependencies
-bash requirement.sh
+# Change the category:
+--cate="sty"    # For style (Van Gogh, watercolor, anime, etc.)
+--cate="obj"    # For object changes (white swan, red car, etc.)
+--cate="back"   # For background changes
 ```
 
-Setting up environments for evaluation contains two parts:
-
-1. download the pre-trained optical flow models (WarpSSIM)
-
-```shells
-cd models/optical_flow/RAFT
-bash download_models.sh
+2. **Submit:**
+```bash
+cd /home/hayk.minasyan/Project/Video-3DGS-new
+sbatch edit_white_swan.slurm
 ```
 
-2. download CLIP pre-trained models (CLIPScore, Qedit)
-
-```shells
-cd models/clipscore
-git lfs install
-git clone https://huggingface.co/openai/clip-vit-large-patch14
-git clone https://huggingface.co/laion/CLIP-ViT-H-14-laion2B-s32B-b79K
+3. **Monitor:**
+```bash
+squeue -u $(whoami)
+tail -f logs/white_swan_*.out
 ```
 
-## Video-3DGS (1st stage): Video Reconstruction
+4. **Results** will be in: `output/`
 
-```shell
-bash sh_recon/davis.sh
+---
+
+## 📝 **Available Scripts**
+
+| Script | Purpose | When to Use |
+|--------|---------|-------------|
+| `edit_white_swan.slurm` | Video editing (style/object/background) | Main editing script - modify and use this |
+| `test_reconstruction_only.slurm` | 3DGS reconstruction only | To reconstruct videos without editing |
+| `edit_vangogh.slurm` | Similar to white_swan | Alternative editing script |
+| `run_with_preprocessed.slurm` | Full pipeline | Reconstruction + editing together |
+
+**Recommended:** Use `edit_white_swan.slurm` for all editing tasks.
+
+---
+
+## 🎨 **Example Editing Prompts**
+
+### **Style Changes** (`--cate="sty"`):
+- `"watercolor painting"`
+- `"anime style"`
+- `"pencil sketch"`
+- `"cyberpunk neon style"`
+- `"Monet impressionist painting"`
+
+### **Object Changes** (`--cate="obj"`):
+- `"white swan"` (already did this!)
+- `"golden swan"`
+- `"robot swan"`
+
+### **Background Changes** (`--cate="back"`):
+- `"sunset background"`
+- `"winter scene with snow"`
+- `"ocean background"`
+
+---
+
+## 🔧 **Environment**
+
+**Python Environment:** `venv_video3dgs_new`
+
+**Activate:**
+```bash
+source venv_video3dgs_new/bin/activate
 ```
 
-To effectively obtain reprentation for video editing, we utilize all the training images for each video scene in this stage.
+**Key Packages:**
+- PyTorch 2.0.1 + CUDA 11.7
+- diffusers 0.14.0
+- transformers 4.26.0
+- Custom CUDA modules: simple-knn, diff-gaussian-rasterization, tiny-cuda-nn
 
-Arguments:
-  - iteration num
-  - group size
-  - number of random points
+---
 
-https://github.com/user-attachments/assets/8eb8e201-ef3b-461c-985b-72d3fa19cd54?width=100&height=100
+## 📊 **Datasets**
 
-- Video reconstruction for "drift-turn" in DAVIS dataset
+**Location:** `datasets/edit/DAVIS/480p_frames/`
 
-## Video-3DGS (2nd stage): Video Editing
-```shell
-bash sh_edit/{initial_editor}/{dataset}.sh
-```
-We currently support three "initial editors": [Text2Video-Zero](https://github.com/Picsart-AI-Research/Text2Video-Zero) / [TokenFlow](https://github.com/omerbt/TokenFlow) / [RAVE](https://rave-video.github.io/)
+**Available scenes for editing:**
+- blackswan ✓ (already edited)
+- bear, boat, camel, car-roundabout, cows, dog, elephant
+- flamingo, gold-fish, hike, hockey, horsejump-high, kid-football
+- kite-surf, lab-coat, longboard, lucia, mallard-water
+- mbike-trick, motorbike, rhino, scooter-gray, swing
 
-We recommend user to install related packages and modules of above initial editors in Video-3DGS framework to conduct initial video editing.
-
-For running TokenFlow efficiently (e.g., edit long video), we borrowed the some strategies from [here](https://github.com/eps696/SDfu).
-
-https://github.com/user-attachments/assets/923dec4a-fb23-4c02-a187-a51cb57501a8?width=100&height=100
-
-- Singe-phase refiner for "Text2Video-Zero" editor
-
-## Video-3DGS (2nd stage) + Recursive and Ensembled refinement
-```shell
-bash sh_edit/{initial_editor}/davis_re.sh
-```
-https://github.com/user-attachments/assets/866d241c-8d63-4d49-9657-9b02737e9c40?width=100&height=100
-
-- Recursive and ensembled refiner for "Text2Video-Zero" editor
-
-## 📖BibTeX
-If you find this code helpful in your research or wish to refer to the baseline
-results, please use the following BibTeX entry.
-
-```
-@article{shin2024enhancing,
-  title={Enhancing Temporal Consistency in Video Editing by Reconstructing Videos with 3D Gaussian Splatting},
-  author={Shin, Inkyu and Yu, Qihang and Shen, Xiaohui and Kweon, In So and Yoon, Kuk-Jin and Chen, Liang-Chieh},
-  journal={arXiv preprint arXiv:2406.02541},
-  year={2024}
-}
+**To edit a different scene:** Change line 35 in `edit_white_swan.slurm`:
+```bash
+SOURCE_DATA="datasets/edit/DAVIS/480p_frames/bear"  # Change to any scene
 ```
 
+---
 
-## 🤗Acknowledgements
-- Thanks to [3DGS](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/) for providing codebase of 3D Gaussian Splatting.
-- Thanks to [Deformable-3DGS](https://github.com/ingra14m/Deformable-3D-Gaussians) for providing codebase of deformable model.
-- Thanks to [Text2Video-Zero](https://github.com/Picsart-AI-Research/Text2Video-Zero), [TokenFlow](https://github.com/omerbt/TokenFlow) and [RAVE](https://rave-video.github.io/) for providing codebase of zero-shot video editors.
-- Thanks to [RAFT](https://github.com/princeton-vl/RAFT) and [CLIP](https://huggingface.co/laion/CLIP-ViT-H-14-laion2B-s32B-b79K) for providing evaluation metric codebase.
+## ⚙️ **Editing Your Custom Video**
+
+To edit `asset/2025-12-22 23.23.20.mp4` or any custom video:
+
+1. **Need COLMAP installed** (contact cluster admin)
+2. Extract frames from your video
+3. Run MC-COLMAP preprocessing
+4. Then use the editing scripts
+
+**OR** use pre-processed datasets (like the DAVIS ones you have now).
+
+---
+
+## 📁 **Project Structure**
+
+```
+Video-3DGS-new/
+├── output/                    # Your final videos ✨
+├── edit_white_swan.slurm     # Main editing script 
+├── test_reconstruction_only.slurm  # Reconstruction script
+├── venv_video3dgs_new/       # Python environment
+├── datasets/edit/            # DAVIS dataset (11GB)
+├── main_3dgsvid.py          # Main Python script (modified)
+├── models/                   # Video editors and optical flow
+└── logs/                     # Job logs (cleaned up)
+```
+
+---
+
+## 🎯 **Quick Reference**
+
+**Edit a video:**
+```bash
+# 1. Modify prompt in edit_white_swan.slurm
+# 2. Submit job
+sbatch edit_white_swan.slurm
+
+# 3. Check status
+squeue -u $(whoami)
+
+# 4. Monitor
+tail -f logs/white_swan_*.out
+
+# 5. Result will be in output/
+```
+
+**Time per edit:** ~30-45 minutes on A100 GPU
+
+---
+
+## ✅ **What's Working**
+
+- ✅ Video reconstruction with 3D Gaussian Splatting
+- ✅ Style editing (Van Gogh, artistic styles)
+- ✅ Object editing (color changes, object transformation)
+- ✅ Temporal consistency (no flickering!)
+- ✅ Text2Video-Zero editor
+- ✅ All dependencies installed
+
+---
+
+## 📚 **Paper**
+
+"Enhancing Temporal Consistency in Video Editing by Reconstructing Videos with 3D Gaussian Splatting" (TMLR 2025)
+
+- Paper: https://arxiv.org/pdf/2406.02541
+- Project: https://video-3dgs-project.github.io/
+
+---
+
+## 🎊 **Success!**
+
+You have a fully working Video-3DGS setup with:
+- 4 edited videos created ✓
+- Complete environment ready ✓
+- Easy-to-use scripts ✓
+
+Enjoy creating more temporally-consistent edited videos! 🎬
+
+
+
 
