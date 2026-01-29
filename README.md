@@ -1,204 +1,161 @@
-# Video-3DGS - Video Editing with 3D Gaussian Splatting
+# Video-3DGS
 
-## 🎉 **Working Setup - Ready to Use!**
+Implementation of "Enhancing Temporal Consistency in Video Editing by Reconstructing Videos with 3D Gaussian Splatting" (TMLR 2025).
 
----
+This repository provides tools for video editing using 3D Gaussian Splatting reconstruction to achieve temporal consistency.
 
-## 📹 **Your Final Videos**
+## Overview
 
-All videos are in: `output/`
+Video-3DGS addresses temporal inconsistency in video editing by:
+1. Reconstructing videos using 3D Gaussian Splatting
+2. Applying text-guided editing with diffusion models
+3. Maintaining temporal coherence across frames
 
-1. **blackswan_ORIGINAL_before_vangogh.mp4** (2.1 MB) - Original video
-2. **blackswan_VANGOGH_STYLE_FINAL.mp4** (2.7 MB) 🎨 - Van Gogh painting style
-3. **blackswan_WHITE_SWAN_FINAL.mp4** (1.2 MB) 🦢 - Black swan → White swan
-4. **blackswan_reconstructed_SUCCESS.mp4** (2.2 MB) - 3DGS reconstruction
+## Features
 
-**Download:**
+- Video reconstruction with 3D Gaussian Splatting
+- Style transfer (artistic styles, painting effects)
+- Object editing (color, shape transformations)
+- Background modification
+- Temporal consistency preservation
+
+## Installation
+
+### Requirements
+
+- Python 3.8+
+- CUDA 11.7
+- PyTorch 2.0.1
+
+### Setup
+
 ```bash
-scp <server>:/home/hayk.minasyan/Project/Video-3DGS-new/output/blackswan_*.mp4 .
+# Activate virtual environment
+source venv_video3dgs_new/bin/activate
+
+# Key dependencies
+pip install torch==2.0.1 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117
+pip install diffusers==0.14.0 transformers==4.26.0
 ```
 
----
+### Custom CUDA Modules
 
-## 🚀 **How to Edit More Videos**
+The following modules are built from source:
+- simple-knn
+- diff-gaussian-rasterization  
+- tiny-cuda-nn
 
-### **Quick Start:**
+## Usage
 
-1. **Edit** `edit_white_swan.slurm` (lines 52-64):
+### Basic Video Editing
+
+Edit the configuration in `edit_white_swan.slurm`:
 
 ```bash
-# Change the prompt:
-PROMPT="your editing instruction here"
-
-# Change the category:
---cate="sty"    # For style (Van Gogh, watercolor, anime, etc.)
---cate="obj"    # For object changes (white swan, red car, etc.)
---cate="back"   # For background changes
+PROMPT="your editing instruction"
+--cate="sty"    # style, obj (object), or back (background)
 ```
 
-2. **Submit:**
+Submit the job:
+
 ```bash
-cd /home/hayk.minasyan/Project/Video-3DGS-new
 sbatch edit_white_swan.slurm
 ```
 
-3. **Monitor:**
+Monitor progress:
+
 ```bash
 squeue -u $(whoami)
 tail -f logs/white_swan_*.out
 ```
 
-4. **Results** will be in: `output/`
+Results are saved to `output/`.
 
----
+### Editing Categories
 
-## 📝 **Available Scripts**
+**Style Transfer** (`--cate="sty"`):
+- Watercolor painting
+- Anime style
+- Van Gogh style
+- Pencil sketch
 
-| Script | Purpose | When to Use |
-|--------|---------|-------------|
-| `edit_white_swan.slurm` | Video editing (style/object/background) | Main editing script - modify and use this |
-| `test_reconstruction_only.slurm` | 3DGS reconstruction only | To reconstruct videos without editing |
-| `edit_vangogh.slurm` | Similar to white_swan | Alternative editing script |
-| `run_with_preprocessed.slurm` | Full pipeline | Reconstruction + editing together |
+**Object Editing** (`--cate="obj"`):
+- Color changes
+- Object transformation
 
-**Recommended:** Use `edit_white_swan.slurm` for all editing tasks.
+**Background Editing** (`--cate="back"`):
+- Scene modification
+- Environment changes
 
----
+### Available Scripts
 
-## 🎨 **Example Editing Prompts**
+| Script | Description |
+|--------|-------------|
+| `edit_white_swan.slurm` | Main video editing pipeline |
+| `test_reconstruction_only.slurm` | 3DGS reconstruction only |
+| `edit_vangogh.slurm` | Alternative editing script |
+| `run_with_preprocessed.slurm` | Full reconstruction + editing |
 
-### **Style Changes** (`--cate="sty"`):
-- `"watercolor painting"`
-- `"anime style"`
-- `"pencil sketch"`
-- `"cyberpunk neon style"`
-- `"Monet impressionist painting"`
+### Processing Time
 
-### **Object Changes** (`--cate="obj"`):
-- `"white swan"` (already did this!)
-- `"golden swan"`
-- `"robot swan"`
+Approximate runtime on A100 GPU: 30-45 minutes per video
 
-### **Background Changes** (`--cate="back"`):
-- `"sunset background"`
-- `"winter scene with snow"`
-- `"ocean background"`
+## Dataset
 
----
+Pre-processed DAVIS dataset scenes available in `datasets/edit/DAVIS/480p_frames/`:
 
-## 🔧 **Environment**
-
-**Python Environment:** `venv_video3dgs_new`
-
-**Activate:**
-```bash
-source venv_video3dgs_new/bin/activate
-```
-
-**Key Packages:**
-- PyTorch 2.0.1 + CUDA 11.7
-- diffusers 0.14.0
-- transformers 4.26.0
-- Custom CUDA modules: simple-knn, diff-gaussian-rasterization, tiny-cuda-nn
-
----
-
-## 📊 **Datasets**
-
-**Location:** `datasets/edit/DAVIS/480p_frames/`
-
-**Available scenes for editing:**
-- blackswan ✓ (already edited)
-- bear, boat, camel, car-roundabout, cows, dog, elephant
-- flamingo, gold-fish, hike, hockey, horsejump-high, kid-football
+- blackswan, bear, boat, camel, car-roundabout, cows, dog, elephant
+- flamingo, gold-fish, hike, hockey, horsejump-high, kid-football  
 - kite-surf, lab-coat, longboard, lucia, mallard-water
 - mbike-trick, motorbike, rhino, scooter-gray, swing
 
-**To edit a different scene:** Change line 35 in `edit_white_swan.slurm`:
-```bash
-SOURCE_DATA="datasets/edit/DAVIS/480p_frames/bear"  # Change to any scene
-```
+To use a different scene, modify the `SOURCE_DATA` path in the SLURM script.
 
----
+## Custom Video Processing
 
-## ⚙️ **Editing Your Custom Video**
+For custom videos:
 
-To edit `asset/2025-12-22 23.23.20.mp4` or any custom video:
-
-1. **Need COLMAP installed** (contact cluster admin)
-2. Extract frames from your video
+1. Install COLMAP for structure-from-motion
+2. Extract video frames
 3. Run MC-COLMAP preprocessing
-4. Then use the editing scripts
+4. Execute editing scripts
 
-**OR** use pre-processed datasets (like the DAVIS ones you have now).
+Alternatively, use the provided pre-processed DAVIS dataset.
 
----
-
-## 📁 **Project Structure**
+## Project Structure
 
 ```
 Video-3DGS-new/
-├── output/                    # Your final videos ✨
-├── edit_white_swan.slurm     # Main editing script 
-├── test_reconstruction_only.slurm  # Reconstruction script
-├── venv_video3dgs_new/       # Python environment
-├── datasets/edit/            # DAVIS dataset (11GB)
-├── main_3dgsvid.py          # Main Python script (modified)
+├── output/                   # Generated videos
+├── datasets/edit/            # Input datasets
+├── main_3dgsvid.py          # Main implementation
 ├── models/                   # Video editors and optical flow
-└── logs/                     # Job logs (cleaned up)
+│   ├── video_editors/
+│   └── optical_flow/
+├── scene/                    # 3DGS scene representation
+├── gaussian_renderer/        # Gaussian splatting renderer
+├── utils/                    # Utility functions
+└── *.slurm                   # Job submission scripts
 ```
 
----
+## Citation
 
-## 🎯 **Quick Reference**
-
-**Edit a video:**
-```bash
-# 1. Modify prompt in edit_white_swan.slurm
-# 2. Submit job
-sbatch edit_white_swan.slurm
-
-# 3. Check status
-squeue -u $(whoami)
-
-# 4. Monitor
-tail -f logs/white_swan_*.out
-
-# 5. Result will be in output/
+```bibtex
+@article{video3dgs2025,
+  title={Enhancing Temporal Consistency in Video Editing by Reconstructing Videos with 3D Gaussian Splatting},
+  journal={Transactions on Machine Learning Research},
+  year={2025}
+}
 ```
 
-**Time per edit:** ~30-45 minutes on A100 GPU
-
----
-
-## ✅ **What's Working**
-
-- ✅ Video reconstruction with 3D Gaussian Splatting
-- ✅ Style editing (Van Gogh, artistic styles)
-- ✅ Object editing (color changes, object transformation)
-- ✅ Temporal consistency (no flickering!)
-- ✅ Text2Video-Zero editor
-- ✅ All dependencies installed
-
----
-
-## 📚 **Paper**
-
-"Enhancing Temporal Consistency in Video Editing by Reconstructing Videos with 3D Gaussian Splatting" (TMLR 2025)
+## References
 
 - Paper: https://arxiv.org/pdf/2406.02541
-- Project: https://video-3dgs-project.github.io/
+- Project Page: https://video-3dgs-project.github.io/
 
----
+## License
 
-## 🎊 **Success!**
-
-You have a fully working Video-3DGS setup with:
-- 4 edited videos created ✓
-- Complete environment ready ✓
-- Easy-to-use scripts ✓
-
-Enjoy creating more temporally-consistent edited videos! 🎬
+See LICENSE file for details.
 
 
 
